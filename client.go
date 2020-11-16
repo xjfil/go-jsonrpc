@@ -78,6 +78,7 @@ func NewClient(ctx context.Context, addr string, namespace string, handler inter
 type client struct {
 	namespace     string
 	paramEncoders map[reflect.Type]ParamEncoder
+	errors        *Errors
 
 	doRequest func(context.Context, clientRequest) (clientResponse, error)
 	exiting   <-chan struct{}
@@ -112,6 +113,7 @@ func httpClient(ctx context.Context, addr string, namespace string, outs []inter
 	c := client{
 		namespace:     namespace,
 		paramEncoders: config.paramEncoders,
+		errors:        config.errors,
 	}
 
 	stop := make(chan struct{})
@@ -194,6 +196,7 @@ func websocketClient(ctx context.Context, addr string, namespace string, outs []
 	c := client{
 		namespace:     namespace,
 		paramEncoders: config.paramEncoders,
+		errors:        config.errors,
 	}
 
 	requests := make(chan clientRequest)
@@ -424,7 +427,8 @@ func (fn *rpcFunc) processResponse(resp clientResponse, rval reflect.Value) []re
 	if fn.errOut != -1 {
 		out[fn.errOut] = reflect.New(errorType).Elem()
 		if resp.Error != nil {
-			out[fn.errOut].Set(reflect.ValueOf(resp.Error))
+
+			out[fn.errOut].Set(resp.Error.val(fn.client.errors))
 		}
 	}
 
@@ -530,7 +534,7 @@ func (fn *rpcFunc) handleRpcCall(args []reflect.Value) (results []reflect.Value)
 
 			retVal = func() reflect.Value { return val.Elem() }
 		}
-		retry := resp.Error != nil && resp.Error.Code == 2 && fn.retry
+		retry := resp.Error != nil && resp.Error.Code == eTempWSError && fn.retry
 		if !retry {
 			break
 		}

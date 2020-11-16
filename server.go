@@ -20,6 +20,7 @@ const (
 // RPCServer provides a jsonrpc 2.0 http server handler
 type RPCServer struct {
 	methods map[string]rpcHandler
+	errors  *Errors
 
 	paramDecoders map[reflect.Type]ParamDecoder
 
@@ -37,6 +38,7 @@ func NewServer(opts ...ServerOption) *RPCServer {
 		methods:        map[string]rpcHandler{},
 		paramDecoders:  config.paramDecoders,
 		maxRequestSize: config.maxRequestSize,
+		errors:         config.errors,
 	}
 }
 
@@ -86,7 +88,7 @@ func (s *RPCServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.handleReader(ctx, r.Body, w, rpcError)
 }
 
-func rpcError(wf func(func(io.Writer)), req *request, code int, err error) {
+func rpcError(wf func(func(io.Writer)), req *request, code ErrorCode, err error) {
 	log.Errorf("RPC Error: %s", err)
 	wf(func(w io.Writer) {
 		if hw, ok := w.(http.ResponseWriter); ok {

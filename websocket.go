@@ -19,6 +19,8 @@ const wsCancel = "xrpc.cancel"
 const chValue = "xrpc.ch.val"
 const chClose = "xrpc.ch.close"
 
+const eTempWSError = -1111111
+
 type frame struct {
 	// common
 	Jsonrpc string            `json:"jsonrpc"`
@@ -450,7 +452,7 @@ func (c *wsConn) closeInFlight() {
 			ID:      id,
 			Error: &respError{
 				Message: "handler: websocket connection closed",
-				Code:    2,
+				Code:    eTempWSError,
 			},
 		}
 	}
@@ -622,7 +624,7 @@ func (c *wsConn) handleWsConn(ctx context.Context) {
 						ID:      *req.req.ID,
 						Error: &respError{
 							Message: "handler: websocket connection closed",
-							Code:    2,
+							Code:    eTempWSError,
 						},
 					}
 					c.writeLk.Unlock()
