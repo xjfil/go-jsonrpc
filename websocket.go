@@ -651,8 +651,8 @@ func (c *wsConn) handleWsConn(ctx context.Context) {
 				log.Warnw("timed-out websocket close error", "error", err)
 			}
 			c.writeLk.Unlock()
-			log.Errorw("Connection timeout", "remote", c.conn.RemoteAddr())
-			return
+			log.Errorw("[Lei]Connection timeout", "remote", c.conn.RemoteAddr())
+			continue
 		case <-c.stop:
 			c.writeLk.Lock()
 			cmsg := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
