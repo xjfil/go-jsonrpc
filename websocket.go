@@ -645,13 +645,15 @@ func (c *wsConn) handleWsConn(ctx context.Context) {
 				// pings not running, this is perfectly normal
 				continue
 			}
-
+			log.Errorw("[Lei]Connection timeout1", "remote", c.conn.RemoteAddr())
+			if true {
+				continue
+			}
 			c.writeLk.Lock()
 			if err := c.conn.Close(); err != nil {
 				log.Warnw("timed-out websocket close error", "error", err)
 			}
 			c.writeLk.Unlock()
-			log.Errorw("[Lei]Connection timeout", "remote", c.conn.RemoteAddr())
 			continue
 		case <-c.stop:
 			c.writeLk.Lock()
